@@ -155,7 +155,11 @@ class App
             if ($routeInfo[0] === Dispatcher::FOUND) {
                 $routeInfo[0] = 'route';
                 $callback = $routeInfo[1]['callback'];
-
+                $args = !empty($routeInfo[2]) ? $routeInfo[2] : [];
+                $anonymousArgs = [];
+                if ($args) {
+                    $anonymousArgs = array_values($args);
+                }
                 $controller = $callback[0];
                 $action = $callback[1] ?? '';
                 $action = $action ?? "index";
@@ -167,8 +171,11 @@ class App
                 $container = Core\App::container();
                 $call = [$controller, $action];
                 $call[0] = $container->get($call[0]);
-                $callback = $call;
-                $result = $callback($request);
+                if (!empty($anonymousArgs)) {
+                    $result = $call($request, ...$anonymousArgs);
+                } else {
+                    $result = $call($request);
+                }
                 Log::info("");
                 return $result;
             } else {

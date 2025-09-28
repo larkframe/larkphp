@@ -38,7 +38,7 @@ class Twig implements View
         $viewSuffix = config("view.options.view_suffix", 'html');
         $viewPath = ROOT_PATH . DIRECTORY_SEPARATOR . "template" . DIRECTORY_SEPARATOR;
         if (!file_exists($viewPath . $template . "." . $viewSuffix)) {
-            return "template" . $template . "." . $viewSuffix . " not found";
+            return "template " . $template . "." . $viewSuffix . " not found";
         }
         if (!isset($views[$viewPath])) {
             $views[$viewPath] = new Environment(new FilesystemLoader($viewPath), config("view.options", []));

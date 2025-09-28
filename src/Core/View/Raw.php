@@ -36,9 +36,9 @@ class Raw implements View
     {
         $request = request();
         $viewSuffix = config("view.options.view_suffix", 'html');
-        $__template_path__ = ROOT_PATH . DIRECTORY_SEPARATOR . 'template' . $template . '.' . $viewSuffix;
+        $__template_path__ = ROOT_PATH . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . $template . '.' . $viewSuffix;
         if (!file_exists($__template_path__)) {
-            return "template" . $template .".". $viewSuffix . " not found";
+            return "template " . $template .".". $viewSuffix . " not found";
         }
         if (isset($request->_view_vars)) {
             extract((array)$request->_view_vars);
