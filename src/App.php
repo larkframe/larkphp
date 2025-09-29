@@ -8,9 +8,12 @@ use FastRoute\Dispatcher;
 use Lark\Core\Context;
 use Lark\Core\Database\Initializer;
 use Lark\Core\Middleware;
+use Lark\Util\krand;
 use Workerman\Connection\TcpConnection;
 use Workerman\Events\Select;
+use Workerman\Protocols\Http;
 use Workerman\Worker;
+use Workerman\Protocols\Http\Session as SessionBase;
 
 class App
 {
@@ -102,6 +105,34 @@ class App
             Config::load();
             Route::load();
             Middleware::load(config('server.middleware', []));
+
+            $sessionConfig = config('session');
+            if ($sessionConfig['enabled'] ?? false) {
+                if (property_exists(SessionBase::class, 'name')) {
+                    SessionBase::$name = $sessionConfig['session_name'];
+                } else {
+                    Http::sessionName($sessionConfig['session_name']);
+                }
+                SessionBase::handlerClass($sessionConfig['handler'], $sessionConfig['config'][$sessionConfig['type']]);
+                $map = [
+                    'auto_update_timestamp' => 'autoUpdateTimestamp',
+                    'cookie_lifetime' => 'cookieLifetime',
+                    'gc_probability' => 'gcProbability',
+                    'cookie_path' => 'cookiePath',
+                    'http_only' => 'httpOnly',
+                    'same_site' => 'sameSite',
+                    'lifetime' => 'lifetime',
+                    'domain' => 'domain',
+                    'secure' => 'secure',
+                ];
+
+                foreach ($map as $key => $name) {
+                    if (isset($sessionConfig[$key]) && property_exists(SessionBase::class, $name)) {
+                        SessionBase::${$name} = $sessionConfig[$key];
+                    }
+                }
+            }
+
             $app = new Core\App(Request::class, Log::channel($accessLogName));
             $worker->onMessage = [$app, 'onMessage'];
             call_user_func([$app, 'onWorkerStart'], $worker);
@@ -151,6 +182,23 @@ class App
             $request = new Request();
             Context::set(Request::class, $request);
 
+            $sessionConfig = config('session');
+            if ($sessionConfig['enabled'] ?? false) {
+                session_start([
+                    'save_handler' => 'files',
+                    'save_path' => $sessionConfig['config']['file']['save_path'] ?? '',
+                    'name' => $sessionConfig['session_name'] ?? 'PHPSESSID',
+                    'cookie_lifetime' => $sessionConfig['cookie_lifetime'] ?? 0,
+                    'cookie_path' => $sessionConfig['cookie_path'] ?? '/',
+                    'cookie_domain' => $sessionConfig['domain'] ?? '',
+                    'cookie_secure' => $sessionConfig['secure'] ?? false,
+                    'cookie_httponly' => $sessionConfig['http_only'] ?? false,
+                    'cookie_samesite' => $sessionConfig['same_site'] ?? '',
+                    'gc_maxlifetime' => $sessionConfig['lifetime'] ?? 1440,
+                    'gc_probability' => krand::numberInt($sessionConfig['gc_probability'][0], $sessionConfig['gc_probability'][1]) ?? 1,
+                ]);
+            }
+
             $routeInfo = Route::dispatch($method, $route);
             if ($routeInfo[0] === Dispatcher::FOUND) {
                 $routeInfo[0] = 'route';
@@ -176,6 +224,7 @@ class App
                 } else {
                     $result = $call($request);
                 }
+
                 Log::info("");
                 return $result;
             } else {
@@ -203,13 +252,13 @@ class App
 
         if (empty($taskConfig) || !isset($taskConfig['handler'])
             || !class_exists($taskConfig['handler']) || !method_exists($taskConfig['handler'], 'run')) {
-            echo $taskConfig['handler']." not useable\n";
+            echo $taskConfig['handler'] . " not useable\n";
             return;
         }
 
         $call = new \ReflectionMethod($taskConfig['handler'], 'run');
         if (!$call->isStatic()) {
-            echo $taskConfig['handler'].".run not statically\n";
+            echo $taskConfig['handler'] . ".run not statically\n";
             return;
         }
 

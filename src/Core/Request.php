@@ -373,9 +373,13 @@ class Request implements Stringable
      * @return Http\Session
      * @throws Exception
      */
-    public function session(): Http\Session
+    public function session(): Http\Session|Session
     {
-        return $this->context['session'] ??= new Http\Session($this->sessionId());
+        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
+            return $this->context['session'] ??= new Http\Session($this->sessionId());
+        } else {
+            return new Session($this->sessionId());
+        }
     }
 
     /**
@@ -387,11 +391,11 @@ class Request implements Stringable
      */
     public function sessionId(?string $sessionId = null): string
     {
-        if ($sessionId) {
-            unset($this->context['sid']);
-        }
-        if (!isset($this->context['sid'])) {
-            if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
+        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
+            if ($sessionId) {
+                unset($this->context['sid']);
+            }
+            if (!isset($this->context['sid'])) {
                 $sessionName = Http\Session::$name;
                 $sid = $sessionId ? '' : $this->cookie($sessionName);
                 $sid = $this->isValidSessionId($sid) ? $sid : '';
@@ -403,12 +407,12 @@ class Request implements Stringable
                     $cookieParams = Http\Session::getCookieParams();
                     $this->setSidCookie($sessionName, $sid, $cookieParams);
                 }
-            } else {
-                $sid = $sessionId ?: static::createSessionId();
+                $this->context['sid'] = $sid;
             }
-            $this->context['sid'] = $sid;
+            return $this->context['sid'];
+        } else {
+            return session_id();
         }
-        return $this->context['sid'];
     }
 
     /**
@@ -436,12 +440,17 @@ class Request implements Stringable
         if ($deleteOldSession) {
             $session->flush();
         }
-        $newSid = static::createSessionId();
-        $session = new Http\Session($newSid);
-        $session->put($sessionData);
-        $cookieParams = Http\Session::getCookieParams();
-        $sessionName = Http\Session::$name;
-        $this->setSidCookie($sessionName, $newSid, $cookieParams);
+        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
+            $newSid = static::createSessionId();
+            $session = new Http\Session($newSid);
+            $session->put($sessionData);
+            $cookieParams = Http\Session::getCookieParams();
+            $sessionName = Http\Session::$name;
+            $this->setSidCookie($sessionName, $newSid, $cookieParams);
+        } else {
+            session_regenerate_id($deleteOldSession);
+            $newSid = session_id();
+        }
         return $newSid;
     }
 
