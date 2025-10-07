@@ -466,7 +466,6 @@ class Response implements Stringable
                 return $head."Content-Length: $bodyLen\r\n\r\n".$body;
             }
         } else {
-
             http_response_code($this->status);
             foreach ($headers as $name => $value) {
                 if (is_array($value)) {

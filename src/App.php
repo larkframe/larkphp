@@ -72,10 +72,10 @@ class App
         Worker::$daemonize = $config['daemonize'] ?? false;
         TcpConnection::$defaultMaxPackageSize = 10 * 1024 * 1024;
 
-        $listen = $config['socketName'] ?? '127.0.0.1:8080';
+        $listen = $config['socketName'] ?? '127.0.0.1:8088';
         $worker = new Worker($listen, []);
         $config = config('server');
-        $worker->name = config('app.name', 'lark-server');
+        $worker->name = config('app.name', 'server');
         $worker->count = $config['worker']['count'] ?? 1;
         $worker->reusePort = $config['worker']['reusePort'] ?? true;
 

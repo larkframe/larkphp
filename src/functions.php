@@ -85,17 +85,16 @@ if (!function_exists('view')) {
      * View response
      * @param mixed $template
      * @param array $vars
-     * @param string|null $app
-     * @param string|null $plugin
+     * @param string|null $viewSuffix
      * @return Response
      */
-    function view(mixed $template = null, array $vars = [], ?string $app = null): Response|string
+    function view(mixed $template = null, array $vars = [], ?string $viewSuffix = null): Response|string
     {
         $handler = \config('view.handler');
         if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            return new Response(200, [], $handler::render($template, $vars, $app));
+            return new Response(200, [], $handler::render($template, $vars, $viewSuffix));
         } else {
-            return $handler::render($template, $vars, $app);
+            return $handler::render($template, $vars, $viewSuffix);
         }
     }
 }
@@ -105,17 +104,16 @@ if (!function_exists('raw_view')) {
      * Raw view response
      * @param mixed $template
      * @param array $vars
-     * @param string|null $app
-     * @param string|null $plugin
+     * @param string|null $viewSuffix
      * @return Response
      * @throws Throwable
      */
-    function raw_view(mixed $template = null, array $vars = [], ?string $app = null): Response|string
+    function raw_view(mixed $template = null, array $vars = [], ?string $viewSuffix = null): Response|string
     {
         if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            return new Response(200, [], Raw::render($template, $vars, $app));
+            return new Response(200, [], Raw::render($template, $vars, $viewSuffix));
         } else {
-            return Raw::render($template, $vars, $app);
+            return Raw::render($template, $vars, $viewSuffix);
         }
     }
 }
@@ -125,16 +123,15 @@ if (!function_exists('twig_view')) {
      * Twig view response
      * @param mixed $template
      * @param array $vars
-     * @param string|null $app
-     * @param string|null $plugin
+     * @param string|null $viewSuffix
      * @return Response
      */
-    function twig_view(mixed $template = null, array $vars = [], ?string $app = null): Response|string
+    function twig_view(mixed $template = null, array $vars = [], ?string $viewSuffix = null): Response|string
     {
         if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            return new Response(200, [], Twig::render($template, $vars, $app));
+            return new Response(200, [], Twig::render($template, $vars, $viewSuffix));
         } else {
-            return Twig::render($template, $vars, $app);
+            return Twig::render($template, $vars, $viewSuffix);
         }
     }
 }
@@ -186,13 +183,13 @@ if (!defined('ROOT_PATH')) {
     if (!$rootPath = Phar::running()) {
         $rootPath = getcwd();
         while ($rootPath !== dirname($rootPath)) {
-            if (@is_dir("$rootPath/vendor") && @is_file("$rootPath/start.php")) {
+            if (@is_dir("$rootPath/vendor") && @is_file("$rootPath/lark")) {
                 break;
             }
             $rootPath = dirname($rootPath);
         }
         if ($rootPath === dirname($rootPath)) {
-            $rootPath = __DIR__ . '/../../../../';
+            exit('Please define the ROOT_PATH constant in your public/index.php file.');
         }
     }
     define('ROOT_PATH', realpath($rootPath) ?: $rootPath);

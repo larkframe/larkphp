@@ -27,15 +27,16 @@ class Twig implements View
      * Render.
      * @param string $template
      * @param array $vars
-     * @param string|null $app
-     * @param string|null $plugin
+     * @param string|null $viewSuffix
      * @return string
      */
-    public static function render(string $template, array $vars, ?string $app = null, ?string $plugin = null): string
+    public static function render(string $template, array $vars, ?string $viewSuffix = null): string
     {
         static $views = [];
         $request = request();
-        $viewSuffix = config("view.options.view_suffix", 'html');
+        if ($viewSuffix == null) {
+            $viewSuffix = config("view.options.view_suffix", 'html');
+        }
         $viewPath = ROOT_PATH . DIRECTORY_SEPARATOR . "template" . DIRECTORY_SEPARATOR;
         if (!file_exists($viewPath . $template . "." . $viewSuffix)) {
             return "template " . $template . "." . $viewSuffix . " not found";

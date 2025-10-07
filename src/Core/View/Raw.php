@@ -29,13 +29,17 @@ class Raw implements View
      * Render.
      * @param string $template
      * @param array $vars
-     * @param string|null $app
+     * @param string|null $viewSuffix
      * @return string
      */
-    public static function render(string $template, array $vars, ?string $app = null): string
+    public static function render(string $template, array $vars, ?string $viewSuffix = null): string
     {
         $request = request();
-        $viewSuffix = config("view.options.view_suffix", 'html');
+
+        if ($viewSuffix == null) {
+            $viewSuffix = config("view.options.view_suffix", 'php');
+        }
+
         $__template_path__ = ROOT_PATH . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . $template . '.' . $viewSuffix;
         if (!file_exists($__template_path__)) {
             return "template " . $template .".". $viewSuffix . " not found";

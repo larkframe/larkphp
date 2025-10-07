@@ -24,7 +24,6 @@
     "guanguans/notify": "^3.2",
     "twig/twig": "^3.21",
     "firebase/php-jwt": "^6.11",
-    "catfan/medoo": "^2.1",
     "genkgo/mail": "^2.12"
   },
   "suggest": {
