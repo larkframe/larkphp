@@ -116,7 +116,10 @@ class Request implements Stringable
             } else {
                 $_RAW_DATA = file_get_contents('php://input');
                 if ($_RAW_DATA) {
-                    $_RAW_PARAMS = json_decode($_RAW_DATA, true);
+                    $tmpValue = json_decode($_RAW_DATA, true);
+                    if (is_array($tmpValue)) {
+                        $_RAW_PARAMS = $tmpValue;
+                    }
                 }
                 $uri = $_SERVER['REQUEST_URI'];
             }
