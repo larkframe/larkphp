@@ -129,7 +129,10 @@ class Request implements Stringable
                     'post' => array_merge($_POST, $_RAW_PARAMS),
                 ];
             }
-            $data['headers'] = getallheaders();
+            $tmpHeader = getallheaders();
+            foreach ($tmpHeader as $k => $v) {
+                $data['headers'][strtolower($k)] = $v;
+            }
             $data['headers']['user-agent'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
             $data['cookie'] = $_COOKIE;
             $data['uri'] = $uri;
