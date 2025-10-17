@@ -144,17 +144,6 @@ class App
     private static function runAsNormal()
     {
         if (in_array(RUN_TYPE, [Consts::RUN_TYPE_SHELL, Consts::RUN_TYPE_WEB])) {
-            if (config('error.catch', false)) {
-                $errorHandler = config("error.handler", null);
-                if ($errorHandler !== null) {
-                    if (method_exists($errorHandler, "register")) {
-                        $errorHandlerOption = config("error.options", []);
-                        call_user_func([$errorHandler, 'register'], $errorHandlerOption);
-                    }
-                }
-            }
-
-            Route::load();
             // 路由处理
             if (RUN_TYPE == Consts::RUN_TYPE_WEB) {
                 $method = strtoupper($_SERVER['REQUEST_METHOD']);
@@ -177,8 +166,21 @@ class App
                     $route = '/';
                 }
             }
+
             $route = preg_replace("~[\/]{2,}~", "/", $route);
             define('ROUTE_VALUE', $route);
+
+            if (config('error.catch', false)) {
+                $errorHandler = config("error.handler", null);
+                if ($errorHandler !== null && !str_contains(ROUTE_VALUE, '.')) {
+                    if (method_exists($errorHandler, "register")) {
+                        $errorHandlerOption = config("error.options", []);
+                        call_user_func([$errorHandler, 'register'], $errorHandlerOption);
+                    }
+                }
+            }
+
+            Route::load();
             $request = new Request();
             Context::set(Request::class, $request);
 
