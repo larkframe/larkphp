@@ -322,13 +322,27 @@ class Response implements Stringable
      */
     public function cookie(string $name, string $value = '', ?int $maxAge = null, string $path = '', string $domain = '', bool $secure = false, bool $httpOnly = false, string $sameSite = ''): static
     {
-        $this->headers['Set-Cookie'][] = $name . '=' . rawurlencode($value)
-            . (empty($domain) ? '' : '; Domain=' . $domain)
-            . ($maxAge === null ? '' : '; Max-Age=' . $maxAge)
-            . (empty($path) ? '' : '; Path=' . $path)
-            . (!$secure ? '' : '; Secure')
-            . (!$httpOnly ? '' : '; HttpOnly')
-            . (empty($sameSite) ? '' : '; SameSite=' . $sameSite);
+        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
+            $this->headers['Set-Cookie'][] = $name . '=' . rawurlencode($value)
+                . (empty($domain) ? '' : '; Domain=' . $domain)
+                . ($maxAge === null ? '' : '; Max-Age=' . $maxAge)
+                . (empty($path) ? '' : '; Path=' . $path)
+                . (!$secure ? '' : '; Secure')
+                . (!$httpOnly ? '' : '; HttpOnly')
+                . (empty($sameSite) ? '' : '; SameSite=' . $sameSite);
+        } else {
+            if (strpos($domain, ':') !== false) {
+                $domain = explode(':', $domain)[0];
+            }
+            setrawcookie($name, rawurlencode($value), [
+                'expires' => time() + ($maxAge??86400),
+                'path' => empty($path)? '/' : $path,
+                'domain' => $domain,
+                'secure' => $secure,
+                'httponly' => $httpOnly,
+                'samesite' => $sameSite
+            ]);
+        }
         return $this;
     }
 

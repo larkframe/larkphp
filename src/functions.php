@@ -183,7 +183,7 @@ if (!defined('ROOT_PATH')) {
     if (!$rootPath = Phar::running()) {
         $rootPath = getcwd();
         while ($rootPath !== dirname($rootPath)) {
-            if (@is_dir("$rootPath/vendor") && @is_file("$rootPath/lark")) {
+            if (@is_dir("$rootPath/vendor") && (@is_file("$rootPath/lark") || @is_file("$rootPath/main"))) {
                 break;
             }
             $rootPath = dirname($rootPath);
