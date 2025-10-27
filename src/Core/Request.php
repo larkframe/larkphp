@@ -374,93 +374,6 @@ class Request implements Stringable
     }
 
     /**
-     * Get session.
-     *
-     * @return Http\Session
-     * @throws Exception
-     */
-    public function session(): Http\Session|Session
-    {
-        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            return $this->context['session'] ??= new Http\Session($this->sessionId());
-        } else {
-            return new Session($this->sessionId());
-        }
-    }
-
-    /**
-     * Get/Set session id.
-     *
-     * @param string|null $sessionId
-     * @return string
-     * @throws Exception
-     */
-    public function sessionId(?string $sessionId = null): string
-    {
-        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            if ($sessionId) {
-                unset($this->context['sid']);
-            }
-            if (!isset($this->context['sid'])) {
-                $sessionName = Http\Session::$name;
-                $sid = $sessionId ? '' : $this->cookie($sessionName);
-                $sid = $this->isValidSessionId($sid) ? $sid : '';
-                if ($sid === '') {
-                    if (!$this->connection) {
-                        throw new RuntimeException('Request->session() fail, header already send');
-                    }
-                    $sid = $sessionId ?: static::createSessionId();
-                    $cookieParams = Http\Session::getCookieParams();
-                    $this->setSidCookie($sessionName, $sid, $cookieParams);
-                }
-                $this->context['sid'] = $sid;
-            }
-            return $this->context['sid'];
-        } else {
-            return session_id();
-        }
-    }
-
-    /**
-     * Check if session id is valid.
-     *
-     * @param mixed $sessionId
-     * @return bool
-     */
-    public function isValidSessionId(mixed $sessionId): bool
-    {
-        return is_string($sessionId) && preg_match('/^[a-zA-Z0-9"]+$/', $sessionId);
-    }
-
-    /**
-     * Session regenerate id.
-     *
-     * @param bool $deleteOldSession
-     * @return string
-     * @throws Exception
-     */
-    public function sessionRegenerateId(bool $deleteOldSession = false): string
-    {
-        $session = $this->session();
-        $sessionData = $session->all();
-        if ($deleteOldSession) {
-            $session->flush();
-        }
-        if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
-            $newSid = static::createSessionId();
-            $session = new Http\Session($newSid);
-            $session->put($sessionData);
-            $cookieParams = Http\Session::getCookieParams();
-            $sessionName = Http\Session::$name;
-            $this->setSidCookie($sessionName, $newSid, $cookieParams);
-        } else {
-            session_regenerate_id($deleteOldSession);
-            $newSid = session_id();
-        }
-        return $newSid;
-    }
-
-    /**
      * Get http raw head.
      *
      * @return string
@@ -748,37 +661,6 @@ class Request implements Stringable
         $files[] = $file;
 
         return $sectionEndOffset + strlen($boundary) + 2;
-    }
-
-    /**
-     * Create session id.
-     *
-     * @return string
-     * @throws Exception
-     */
-    public static function createSessionId(): string
-    {
-        return bin2hex(pack('d', microtime(true)) . random_bytes(8));
-    }
-
-    /**
-     * @param string $sessionName
-     * @param string $sid
-     * @param array $cookieParams
-     * @return void
-     */
-    protected function setSidCookie(string $sessionName, string $sid, array $cookieParams): void
-    {
-        if (!$this->connection) {
-            throw new RuntimeException('Request->setSidCookie() fail, header already send');
-        }
-        $this->connection->headers['Set-Cookie'] = [$sessionName . '=' . $sid
-            . (empty($cookieParams['domain']) ? '' : '; Domain=' . $cookieParams['domain'])
-            . (empty($cookieParams['lifetime']) ? '' : '; Max-Age=' . $cookieParams['lifetime'])
-            . (empty($cookieParams['path']) ? '' : '; Path=' . $cookieParams['path'])
-            . (empty($cookieParams['samesite']) ? '' : '; SameSite=' . $cookieParams['samesite'])
-            . (!$cookieParams['secure'] ? '' : '; Secure')
-            . (!$cookieParams['httponly'] ? '' : '; HttpOnly')];
     }
 
     /**
