@@ -350,7 +350,7 @@ if (!function_exists('getallheaders')) {
     }
 }
 
-function getRealHost()
+function getRealHost($withoutPort = false)
 {
     // 检查常见的代理头
     $possibleHeaders = [
@@ -372,8 +372,9 @@ function getRealHost()
             }
 
             // 移除端口号（可选）
-            $host = strtok($host, ':');
-
+            if ($withoutPort) {
+                $host = strtok($host, ':');
+            }
             return $host;
         }
     }

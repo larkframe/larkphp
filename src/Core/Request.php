@@ -318,7 +318,7 @@ class Request implements Stringable
             }
             return $host;
         } else {
-            return getRealHost();
+            return getRealHost($withoutPort);
         }
     }
 
