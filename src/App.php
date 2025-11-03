@@ -29,7 +29,7 @@ class App
         try {
             $envFile = ROOT_PATH . DIRECTORY_SEPARATOR . '.env';
             if (!file_exists($envFile)) {
-                file_put_contents($envFile, "APP_NAME=app\r\nTIME_ZONE=Asia/Shanghai\r\nRUN_MODE=dev\r\n");
+                file_put_contents($envFile, "APP_NAME=app\r\nTIME_ZONE=Asia/Shanghai\r\nRUN_MODE=prod\r\n");
             }
             $env = Config::loadEnv($envFile);
         } catch (Exception $e) {
@@ -37,7 +37,12 @@ class App
         }
 
         date_default_timezone_set($env['TIME_ZONE'] ?? 'Asia/Shanghai');
-        define('RUN_MODE', strtolower($env['RUN_MODE']) ?? 'dev');
+        define('RUN_MODE', strtolower($env['RUN_MODE']) ?? 'prod');
+        if (RUN_MODE === 'prod') {
+            define('isProd', true);
+        } else {
+            define('isProd', false);
+        }
         define('APP_NAME', $env['APP_NAME'] ?? 'app');
 
         // 加载config
