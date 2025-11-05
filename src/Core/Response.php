@@ -325,8 +325,9 @@ class Response implements Stringable
         if (RUN_TYPE == Consts::RUN_TYPE_SERVER) {
             $this->headers['Set-Cookie'][] = $name . '=' . rawurlencode($value)
                 . (empty($domain) ? '' : '; Domain=' . $domain)
-                . ($maxAge === null ? '' : '; Max-Age=' . $maxAge)
-                . (empty($path) ? '' : '; Path=' . $path)
+                . '; Max-Age=' . (empty($maxAge) ? 86400 : $maxAge)
+                . '; Expires=' . (time() + (empty($maxAge) ? 86400 : $maxAge))
+                . (empty($path) ? '; Path=/' : '; Path=' . $path)
                 . (!$secure ? '' : '; Secure')
                 . (!$httpOnly ? '' : '; HttpOnly')
                 . (empty($sameSite) ? '' : '; SameSite=' . $sameSite);
@@ -335,9 +336,9 @@ class Response implements Stringable
                 $domain = explode(':', $domain)[0];
             }
             setrawcookie($name, rawurlencode($value), [
-                'expires' => time() + ($maxAge??86400),
-                'path' => empty($path)? '/' : $path,
                 'domain' => $domain,
+                'expires' => time() + ($maxAge ?? 86400),
+                'path' => empty($path) ? '/' : $path,
                 'secure' => $secure,
                 'httponly' => $httpOnly,
                 'samesite' => $sameSite
@@ -357,11 +358,11 @@ class Response implements Stringable
 
         $headers = $this->headers;
         if (!isset($headers['Server'])) {
-            $headers["Server"] ="lark-server";
+            $headers["Server"] = "lark-server";
         }
 
         if (!isset($headers['Connection'])) {
-            $headers['Connection']= "keep-alive";
+            $headers['Connection'] = "keep-alive";
         }
         $file = $fileInfo['file'];
         $fileInfo = pathinfo($file);
@@ -477,7 +478,7 @@ class Response implements Stringable
             if (isset($headers['Transfer-Encoding']) && $bodyLen) {
                 return "$head\r\n" . dechex($bodyLen) . "\r\n{$body}\r\n";
             } else {
-                return $head."Content-Length: $bodyLen\r\n\r\n".$body;
+                return $head . "Content-Length: $bodyLen\r\n\r\n" . $body;
             }
         } else {
             http_response_code($this->status);
