@@ -128,6 +128,7 @@ class App
                 if (str_ends_with($route, "/") || str_ends_with($route, "?")) {
                     $route = substr($route, 0, strlen($route) - 1);
                 }
+//                $route = str_replace($_SERVER['DOCUMENT_URI'],'',$route);
                 if (!$route) {
                     $route = '/';
                 }
@@ -162,6 +163,7 @@ class App
             Context::set(Request::class, $request);
 
             $routeInfo = Route::dispatch($method, $route);
+
             if ($routeInfo[0] === Dispatcher::FOUND) {
                 $routeInfo[0] = 'route';
                 $callback = $routeInfo[1]['callback'];
@@ -190,14 +192,21 @@ class App
                 Log::info("");
                 return $result;
             } else {
-                $filePath = realpath(ROOT_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . $route);
-                if ($filePath && file_exists($filePath) && is_file($filePath)) {
-                    $result = (new \Lark\Response())->file($filePath);
-                    Log::info("");
-                    return $result;
+                if (!str_ends_with($route, '.php') && $route != $_SERVER['DOCUMENT_URI']) {
+                    $filePath = realpath(ROOT_PATH . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . $route);
+                    if ($filePath && file_exists($filePath) && is_file($filePath)) {
+                        $result = (new \Lark\Response())->file($filePath);
+                        Log::info("");
+                        return $result;
+                    }
                 }
             }
-            return "404 Not Found";
+            $errorPage = config('error_page.404', null);
+            if ($errorPage) {
+                return redirect($errorPage);
+            } else {
+                return "404 Not Found";
+            }
         } else {
             return "Error Run Type";
         }

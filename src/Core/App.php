@@ -169,8 +169,12 @@ class App
 
     protected static function notFound($request): Response
     {
-        // todo
-        return new \Lark\Response(404, [], "404 Not Found");
+        $errorPage = config('error_page.404', null);
+        if ($errorPage) {
+            return redirect($errorPage);
+        } else {
+            return new \Lark\Response(404, [], "404 Not Found");
+        }
     }
 
     /**
